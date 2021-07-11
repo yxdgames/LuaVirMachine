@@ -6,17 +6,25 @@ extern "C" {
 #include <lauxlib.h>
 }
 
+// Base on lua version5.3.4
 class LuaVirMachine
 {
 public:
     LuaVirMachine(void)
         : m_pLuaState(::luaL_newstate())
     {
+        m_Flag.data = 0x01;
         if (m_pLuaState) luaL_openlibs(m_pLuaState);
+    }
+    LuaVirMachine(lua_State *ls, bool own = false)
+        : m_pLuaState(ls)
+    {
+        m_Flag.data = !own ? 0x00 : 0x01;
     }
     ~LuaVirMachine(void)
     {
-        if (m_pLuaState) ::lua_close(m_pLuaState);
+        if (m_pLuaState && m_Flag.owner)
+            ::lua_close(m_pLuaState);
     }
 public:
     /* base stack manipulation */
@@ -47,7 +55,7 @@ public:
         va_end(ap);
         return ret;
     }
-    /* <- stack */
+    /* get stack value */
     lua_Number tonumber(int idx, bool *isnum = nullptr)
     {
         int is_num;
@@ -148,11 +156,31 @@ public:
     int load(lua_Reader reader, void *dt, const char *chunkname, const char *mode) { return lua_load(m_pLuaState, reader, dt, chunkname, mode); }
     int dump(lua_Writer writer, void *data, int strip) { return lua_dump(m_pLuaState, writer, data, strip); }
 public:
-    /* lua (extension) lib (success: ret == 0) */
+    /* lua (extension) lib */
+    // arguments for lua_CFunction(if error, lua will be halted)
+    void checkstack(int sz, const char *msg) { luaL_checkstack(m_pLuaState, sz, msg); }
+    void checktype(int arg, int t) { luaL_checktype(m_pLuaState, arg, t); }
+    void checkany(int arg) { luaL_checkany(m_pLuaState, arg); }
+    const char *checkstring(int arg, size_t *l = nullptr) { return luaL_checklstring(m_pLuaState, arg, l); }
+    const char *optlstring(int arg, const char *def, size_t *l) { return luaL_optlstring(m_pLuaState, arg, def, l); }
+    lua_Number checknumber(int arg) { return luaL_checknumber(m_pLuaState, arg); }
+    lua_Number optnumber(int arg, lua_Number def) { return luaL_optnumber(m_pLuaState, arg, def); }
+    lua_Integer checkinteger(int arg) { return luaL_checkinteger(m_pLuaState, arg); }
+    lua_Integer optinteger(int arg, lua_Integer def) { return luaL_optinteger(m_pLuaState, arg, def); }
+
+    // success: ret == 0
     int loadfile(const char *filename, const char *mode = nullptr) { return luaL_loadfilex(m_pLuaState, filename, mode); }
     void reg_funcs(const luaL_Reg *l, int nup) { luaL_setfuncs(m_pLuaState, l, nup); }
 public:
     operator lua_State*(void) { return this->m_pLuaState; }
+private:
+    union {
+        struct {
+            unsigned char owner : 1;
+            unsigned char reserve: 7;
+        };
+        unsigned char data;
+    } m_Flag;
 private:
     lua_State   *m_pLuaState;
 };
