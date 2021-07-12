@@ -27,6 +27,9 @@ public:
             ::lua_close(m_pLuaState);
     }
 public:
+    /*********************/
+    /* base manipulation */
+    /*********************/
     /* base stack manipulation */
     int absindex(int idx) { return lua_absindex(m_pLuaState, idx); }
     int gettop(void) { return lua_gettop(m_pLuaState); }
@@ -86,10 +89,10 @@ public:
     int rawget(int idx) { return lua_rawget(m_pLuaState, idx); }
     int rawgeti(int idx, lua_Integer n) { return lua_rawgeti(m_pLuaState, idx, n); }
     int rawgetp(int idx, const void *p) { return lua_rawgetp(m_pLuaState, idx, p); }
-    int getmetatable(int objindex) { return lua_getmetatable(m_pLuaState, objindex); }
-    int getuservalue(int idx) { return lua_getuservalue(m_pLuaState, idx); }
     void createtable(int narr, int nrec) { lua_createtable(m_pLuaState, narr, nrec); }
     void *newuserdata(size_t sz) { return lua_newuserdata(m_pLuaState, sz); }
+    int getmetatable(int objindex) { return lua_getmetatable(m_pLuaState, objindex); }
+    int getuservalue(int idx) { return lua_getuservalue(m_pLuaState, idx); }
     /* stack -> Lua */
     void setglobal(const char *name) { lua_setglobal(m_pLuaState, name); }
     void settable(int idx) { lua_settable(m_pLuaState, idx); }
@@ -113,6 +116,12 @@ public:
     bool rawequal(int idx1, int idx2) { return lua_rawequal(m_pLuaState, idx1, idx2) != 0 ? true : false; }
     bool compare(int idx1, int idx2, int op) { return lua_compare(m_pLuaState, idx1, idx2, op) != 0 ? true : false; }
     
+    /* load and call functions (load and run Lua code / success: ret == 0) */
+    void call(int nargs, int nresults, lua_KContext ctx = 0, lua_KFunction k = nullptr) { lua_callk(m_pLuaState, nargs, nresults, ctx, k); }
+    int pcall(int nargs, int nresults, int errfunc, lua_KContext ctx = 0, lua_KFunction k = nullptr) { return lua_pcallk(m_pLuaState, nargs, nresults, errfunc, ctx, k); }
+    int load(lua_Reader reader, void *dt, const char *chunkname, const char *mode) { return lua_load(m_pLuaState, reader, dt, chunkname, mode); }
+    int dump(lua_Writer writer, void *data, int strip) { return lua_dump(m_pLuaState, writer, data, strip); }
+
     /* extension */
     //
     void *getextraspace(void) { return lua_getextraspace(m_pLuaState); }
@@ -150,13 +159,9 @@ public:
     bool isnone(int n) { return lua_isnone(m_pLuaState, n); }
     bool isnoneornil(int n) { return lua_isnoneornil(m_pLuaState, n); }
 public:
-    /* load and call functions (load and run Lua code / success: ret == 0) */
-    void call(int nargs, int nresults, lua_KContext ctx = 0, lua_KFunction k = nullptr) { lua_callk(m_pLuaState, nargs, nresults, ctx, k); }
-    int pcall(int nargs, int nresults, int errfunc, lua_KContext ctx = 0, lua_KFunction k = nullptr) { return lua_pcallk(m_pLuaState, nargs, nresults, errfunc, ctx, k); }
-    int load(lua_Reader reader, void *dt, const char *chunkname, const char *mode) { return lua_load(m_pLuaState, reader, dt, chunkname, mode); }
-    int dump(lua_Writer writer, void *data, int strip) { return lua_dump(m_pLuaState, writer, data, strip); }
-public:
-    /* lua (extension) lib */
+    /********************/
+    /* lib manipulation */
+    /********************/
     // arguments for lua_CFunction(if error, lua will be halted)
     void checkstack(int sz, const char *msg) { luaL_checkstack(m_pLuaState, sz, msg); }
     void checktype(int arg, int t) { luaL_checktype(m_pLuaState, arg, t); }
@@ -167,6 +172,11 @@ public:
     lua_Number optnumber(int arg, lua_Number def) { return luaL_optnumber(m_pLuaState, arg, def); }
     lua_Integer checkinteger(int arg) { return luaL_checkinteger(m_pLuaState, arg); }
     lua_Integer optinteger(int arg, lua_Integer def) { return luaL_optinteger(m_pLuaState, arg, def); }
+
+    int newmetatable(const char *tname) { return luaL_newmetatable(m_pLuaState, tname); }
+    void setmetatable(const char *tname) { luaL_setmetatable(m_pLuaState, tname); }
+    void *testudata(int ud, const char *tname) { return luaL_testudata(m_pLuaState, ud, tname); }
+    void *checkudata(int ud, const char *tname) { return luaL_checkudata(m_pLuaState, ud, tname); }
 
     // success: ret == 0
     int loadfile(const char *filename, const char *mode = nullptr) { return luaL_loadfilex(m_pLuaState, filename, mode); }
