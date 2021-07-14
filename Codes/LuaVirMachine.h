@@ -185,7 +185,7 @@ public:
     int loadbufferx(const char *buff, size_t sz, const char *name, const char *mode = nullptr) { return luaL_loadbufferx(m_pLuaState, buff, sz, name, mode); }
     int loadstring(const char *s) { return luaL_loadstring(m_pLuaState, s); }
     int loadfile(const char *filename, const char *mode = nullptr) { return luaL_loadfilex(m_pLuaState, filename, mode); }
-    void reg_funcs(const luaL_Reg *l, int nup) { luaL_setfuncs(m_pLuaState, l, nup); }
+    void register_funcs(const luaL_Reg *l, int nup) { luaL_setfuncs(m_pLuaState, l, nup); }
 public:
     operator lua_State*(void) { return this->m_pLuaState; }
 private:
