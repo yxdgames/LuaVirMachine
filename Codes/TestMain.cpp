@@ -70,12 +70,7 @@ int main(int argc, const char **argv)
     // top_idx = vm.gettop();
     // std::cout << "top_idx=" << top_idx << std::endl;
     
-    vm.push(&LUA_Func1);
-    // top_idx = vm.gettop();
-    // std::cout << "top_idx=" << top_idx << std::endl;
-    vm.setglobal("Func1");
-    // top_idx = vm.gettop();
-    // std::cout << "top_idx=" << top_idx << std::endl;
+    vm.register_func("Func1", &LUA_Func1);
 
     std::cout << std::endl;
     vm.push(&LUA_Test);
