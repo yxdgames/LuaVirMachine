@@ -3,6 +3,12 @@
 #include <string>
 #include <iostream>
 
+static int KFunction(lua_State *L, int status, lua_KContext ctx)
+{
+    printf("status=%d, ctx=%d\n", status, ctx);
+    return 0;
+}
+
 static std::string GetValueInStack(LuaVirMachine &vm, int idx)
 {
     switch (vm.type(idx))
@@ -83,6 +89,21 @@ static int LUA_Func1(lua_State *L)
     return 2;
 }
 
+static int LUA_CYield(lua_State *L)
+{
+    LuaVirMachine vm(L);
+
+    return vm.yield(0);
+}
+
+static int LUA_CResult(lua_State *L)
+{
+    LuaVirMachine vm(L);
+
+    (void)vm.resume(vm, 0);
+    return 0;
+}
+
 int main(int argc, const char **argv)
 {
     LuaVirMachine vm;
@@ -114,6 +135,8 @@ int main(int argc, const char **argv)
     // top_idx = vm.gettop();
     // std::cout << "top_idx=" << top_idx << std::endl;
     vm.register_func("Func1", &LUA_Func1);
+    vm.register_func("c_yield", &LUA_CYield);
+    vm.register_func("c_result", &LUA_CResult);
     std::cout << std::endl;
 
     /* ===c call function in stack=== */

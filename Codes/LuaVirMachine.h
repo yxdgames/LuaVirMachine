@@ -116,11 +116,17 @@ public:
     bool rawequal(int idx1, int idx2) { return lua_rawequal(m_pLuaState, idx1, idx2) != 0 ? true : false; }
     bool compare(int idx1, int idx2, int op) { return lua_compare(m_pLuaState, idx1, idx2, op) != 0 ? true : false; }
     
-    /* load and call functions (load and run Lua code / success: ret == 0) */
+    /* load and call functions (load and run Lua code / success: ret == 0 (LUA_OK)) */
     void call(int nargs, int nresults, lua_KContext ctx = 0, lua_KFunction k = nullptr) { lua_callk(m_pLuaState, nargs, nresults, ctx, k); }
     int pcall(int nargs, int nresults, int errfunc, lua_KContext ctx = 0, lua_KFunction k = nullptr) { return lua_pcallk(m_pLuaState, nargs, nresults, errfunc, ctx, k); }
     int load(lua_Reader reader, void *dt, const char *chunkname, const char *mode) { return lua_load(m_pLuaState, reader, dt, chunkname, mode); }
     int dump(lua_Writer writer, void *data, int strip) { return lua_dump(m_pLuaState, writer, data, strip); }
+
+    /* coroutine functions */
+    int yield(int nresults, lua_KContext ctx = 0, lua_KFunction k = nullptr) { return lua_yieldk(m_pLuaState, nresults, ctx, k); }
+    int resume(lua_State *from, int narg) { return lua_resume(m_pLuaState, from, narg); } // success: ret == 0 (LUA_OK)
+    int status(lua_State *LS) { return lua_status(LS); }
+    int isyieldable(lua_State *LS) { return lua_isyieldable(LS); }
 
     /* extension */
     //
@@ -181,7 +187,7 @@ public:
     void *testudata(int ud, const char *tname) { return luaL_testudata(m_pLuaState, ud, tname); }
     void *checkudata(int ud, const char *tname) { return luaL_checkudata(m_pLuaState, ud, tname); }
 
-    // success: ret == 0
+    // success: ret == 0 (LUA_OK)
     int loadbufferx(const char *buff, size_t sz, const char *name, const char *mode = nullptr) { return luaL_loadbufferx(m_pLuaState, buff, sz, name, mode); }
     int loadstring(const char *s) { return luaL_loadstring(m_pLuaState, s); }
     int loadfile(const char *filename, const char *mode = nullptr) { return luaL_loadfilex(m_pLuaState, filename, mode); }
