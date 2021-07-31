@@ -3,12 +3,6 @@
 #include <string>
 #include <iostream>
 
-static int KFunction(lua_State *L, int status, lua_KContext ctx)
-{
-    printf("status=%d, ctx=%d\n", status, ctx);
-    return 0;
-}
-
 static std::string GetValueInStack(LuaVirMachine &vm, int idx)
 {
     switch (vm.type(idx))
@@ -89,19 +83,35 @@ static int LUA_Func1(lua_State *L)
     return 2;
 }
 
-static int LUA_CYield(lua_State *L)
+static int Continuation_Proc(LuaVirMachine &vm)
 {
-    LuaVirMachine vm(L);
-
-    return vm.yield(0);
+    vm.push("string parameter1");
+    vm.push("string parameter2");
+    return 2; //return parameter number
 }
 
-static int LUA_CResult(lua_State *L)
+static int KFunction(lua_State *L, int status, lua_KContext ctx)
 {
+    printf("[KFunction] status=%d, ctx=%d\n", status, ctx);
     LuaVirMachine vm(L);
+    return Continuation_Proc(vm); //return parameter number - KFunction做的内容为LUA_C_Proc_With_yield中vm.yield之后的处理 - 以模拟resume的处理流程
+}
 
-    (void)vm.resume(vm, 0);
-    return 0;
+static int LUA_C_Proc_With_yield(lua_State *L)
+{
+    printf("[LUA_C_Proc_With_yield]\n");
+
+    LuaVirMachine vm(L);
+    
+    {
+        vm.push(static_cast<lua_Integer>(10011));
+        vm.push(static_cast<lua_Integer>(2002));
+        // return vm.yield(2, 0, &KFunction);
+        (void)vm.yield(2, 0, &KFunction);
+        return 0;
+    }
+
+    return Continuation_Proc(vm); //return parameter number
 }
 
 int main(int argc, const char **argv)
@@ -135,8 +145,7 @@ int main(int argc, const char **argv)
     // top_idx = vm.gettop();
     // std::cout << "top_idx=" << top_idx << std::endl;
     vm.register_func("Func1", &LUA_Func1);
-    vm.register_func("c_yield", &LUA_CYield);
-    vm.register_func("c_result", &LUA_CResult);
+    vm.register_func("c_proc_with_yield", &LUA_C_Proc_With_yield);
     std::cout << std::endl;
 
     /* ===c call function in stack=== */
