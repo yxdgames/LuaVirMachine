@@ -125,8 +125,8 @@ public:
     /* coroutine functions */
     int yield(int nresults, lua_KContext ctx = 0, lua_KFunction k = nullptr) { return lua_yieldk(m_pLuaState, nresults, ctx, k); } // success: ret == 0 (LUA_OK)
     int resume(lua_State *from, int narg) { return lua_resume(m_pLuaState, from, narg); } // success: ret == 0 (LUA_OK)
-    int status(lua_State *LS) { return lua_status(LS); }
-    int isyieldable(lua_State *LS) { return lua_isyieldable(LS); }
+    static int status(lua_State *LS) { return lua_status(LS); }
+    static int isyieldable(lua_State *LS) { return lua_isyieldable(LS); }
 
     /* extension */
     //
